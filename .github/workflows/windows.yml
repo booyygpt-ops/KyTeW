@@ -1,0 +1,28 @@
+name: KYTEW Windows installer
+on:
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: Deployed KYTEW HTTPS application URL
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  installer:
+    runs-on: windows-latest
+    env:
+      KYTEW_APP_URL: ${{ inputs.app_url }}
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KYTEW-Windows-unsigned
+          path: apps/desktop/release/*.exe
