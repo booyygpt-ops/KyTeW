@@ -1,4 +1,58 @@
 import { test, expect, type Page } from "@playwright/test";
+
+test("IP-address browser origin supports registration and persisted live chat", async ({
+  page,
+}) => {
+  // A different browser origin than localhost reproduces the original rejection.
+  // Use loopback in cloud runners whose browser egress proxy blocks private IPs.
+  // Set KYTEW_TEST_LAN_IP to this PC's actual LAN IP for a local network run.
+  const address = process.env.KYTEW_TEST_LAN_IP ?? "127.0.0.1";
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto(`http://${address}:5173`);
+  const suffix = Date.now().toString(36);
+  await page
+    .getByRole("button", { name: "Hesap oluştur", exact: true })
+    .click();
+  await page.getByLabel("Görünen ad").fill("Tablet");
+  await page.getByLabel("Kullanıcı adı", { exact: true }).fill(`lan_${suffix}`);
+  await page.getByLabel("E-posta adresi").fill(`lan_${suffix}@example.test`);
+  await page
+    .getByLabel("Şifre", { exact: true })
+    .fill("KYTEW LAN test password! 2026");
+  await page
+    .getByRole("button", { name: "Hesap oluştur", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Merhaba, Tablet" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Sunucu oluştur", exact: true })
+    .click();
+  await page.getByLabel("Sunucu adı").fill(`Tablet ağı ${suffix}`);
+  await page
+    .getByRole("button", { name: "Sunucuyu oluştur", exact: true })
+    .click();
+  await expect(page.getByText("Canlı bağlantı", { exact: true })).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "Mesaj", exact: true })
+    .fill("Yerel ağdan merhaba!");
+  await page.getByRole("button", { name: "Mesaj gönder", exact: true }).click();
+  await expect(
+    page.getByText("Yerel ağdan merhaba!", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "Arkadaşlar", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: `Tablet ağı ${suffix}`, exact: true })
+    .click();
+  await expect(page.getByText("Canlı bağlantı", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Yerel ağdan merhaba!", { exact: true }),
+  ).toBeVisible();
+});
+
 test("two separate sessions can create, join and exchange persisted messages", async ({
   browser,
   page,

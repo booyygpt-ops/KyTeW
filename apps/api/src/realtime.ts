@@ -10,6 +10,8 @@ import {
 import { Server, Socket } from "socket.io";
 import Redis from "ioredis";
 import { Access, Sessions } from "./security";
+import { browserOrigins } from "./origins";
+import type { IncomingMessage } from "node:http";
 
 @Injectable()
 export class Runtime implements OnModuleDestroy {
@@ -23,10 +25,16 @@ export class Runtime implements OnModuleDestroy {
 }
 @WebSocketGateway({
   cors: {
-    origin: process.env.WEB_ORIGIN ?? "http://localhost:5173",
+    origin: browserOrigins.allowed,
     credentials: true,
   },
   maxHttpBufferSize: 8192,
+  allowRequest: (
+    request: IncomingMessage,
+    callback: (error: string | null, allowed: boolean) => void,
+  ) => {
+    callback(null, browserOrigins.isAllowed(request.headers.origin));
+  },
 })
 export class Realtime implements OnGatewayConnection {
   @WebSocketServer() io!: Server;
@@ -37,10 +45,7 @@ export class Realtime implements OnGatewayConnection {
   ) {}
   async handleConnection(socket: Socket) {
     try {
-      if (
-        socket.handshake.headers.origin !==
-        (process.env.WEB_ORIGIN ?? "http://localhost:5173")
-      )
+      if (!browserOrigins.isAllowed(socket.handshake.headers.origin))
         throw new Error("origin");
       socket.data.user = await this.sessions.resolve(
         socket.handshake.headers.cookie,
@@ -80,13 +85,11 @@ export class Realtime implements OnGatewayConnection {
       await this.access.room(user.id, body.roomId);
       const key = `typing:${user.id}:${body.roomId}`;
       if (await this.runtime.redis.set(key, "1", "EX", 2, "NX"))
-        socket
-          .to(`room:${body.roomId}`)
-          .emit("typing", {
-            roomId: body.roomId,
-            userId: user.id,
-            displayName: user.displayName,
-          });
+        socket.to(`room:${body.roomId}`).emit("typing", {
+          roomId: body.roomId,
+          userId: user.id,
+          displayName: user.displayName,
+        });
     } catch {
       /* Unauthorized or unavailable typing is deliberately dropped. */
     }

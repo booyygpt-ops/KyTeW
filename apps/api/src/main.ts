@@ -21,6 +21,7 @@ import { AuthController } from "./auth";
 import { CommunityController } from "./community";
 import { SocialController } from "./social";
 import { MessagesController } from "./messages";
+import { browserOrigins } from "./origins";
 
 @Catch()
 class Errors implements ExceptionFilter {
@@ -76,13 +77,12 @@ async function bootstrap() {
   const { json } = await import("express");
   app.use(json({ limit: "16kb" }));
   app.use(helmet());
-  const origin = process.env.WEB_ORIGIN ?? "http://localhost:5173";
-  app.enableCors({ origin, credentials: true });
+  app.enableCors({ origin: browserOrigins.allowed, credentials: true });
   const runtime = app.get(Runtime);
   app.use(async (req: Request, res: Response, next: NextFunction) => {
     if (
       !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
-      req.headers.origin !== origin
+      !browserOrigins.isAllowed(req.headers.origin)
     ) {
       res.status(403).json({ message: "Güvenilmeyen istek kaynağı." });
       return;

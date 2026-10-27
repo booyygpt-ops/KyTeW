@@ -25,6 +25,7 @@ Redis API hız sınırlarını ve yazıyor olaylarını koordine eder. **Bu sür
 - Geliştirmede HttpOnly/SameSite=Lax; üretimde ek olarak Secure ve `__Host-` öneki. Token localStorage'a yazılmaz. Kalıcı giriş 30 gün; normal giriş sunucuda en fazla bir gün ve tarayıcı oturum çerezi.
 - Zod doğrulama, 16 KiB HTTP ve 8 KiB socket gövde sınırı; Prisma parametreli sorgular.
 - Değiştiren HTTP isteklerinde kesin Origin kontrolü; WebSocket handshake ve oda aboneliğinde oturum/Origin kontrolü.
+- HTTP CORS, yazma istekleri ve Socket.IO ortak kaynak politikasını kullanır. `WEB_ORIGIN` birincil adres, `WEB_ORIGINS` ek tam adreslerdir. Yalnızca `NODE_ENV=development` altında, `ALLOW_LAN_ORIGINS=false` değilse, makinenin gerçek özel IPv4 arayüzleri birincil HTTP adresinin portunda otomatik eklenir. Başka yerel IP'ler, yanlış portlar ve istemciden gelen Host/forwarded başlıkları güven kaynağı değildir. Üretimde otomatik genişletme yapılmaz.
 - Her mesaj gönderme, okuma, düzenleme, silme ve socket aboneliğinde sunucu tarafında yetki kontrolü. Teslimattan önce üyelik/oturum tekrar denetlenir.
 - Sunucu sahibi kanal/davet oluşturabilir; üye okuyabilir/yazabilir. İlk sürüm özel rol ve özel kanal yetki motoru içermez.
 - Çıkış ve şifre değişimi oturum kayıtlarını iptal eder; sonraki socket teslimatları da bunu denetler.

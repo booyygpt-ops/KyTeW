@@ -8,6 +8,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const base = "http://localhost:4101",
   origin = "http://localhost:5173";
+const lanOrigin = "http://192.168.1.50:5173";
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
 });
@@ -81,6 +82,8 @@ before(async () => {
       ...process.env,
       PORT: "4101",
       WEB_ORIGIN: origin,
+      WEB_ORIGINS: lanOrigin,
+      ALLOW_LAN_ORIGINS: "false",
       RATE_NAMESPACE: `test-${suffix}`,
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -107,6 +110,104 @@ after(async () => {
   processApi?.kill("SIGTERM");
   await db.$disconnect();
 });
+
+test(
+  "configured tablet origin supports registration, authenticated requests and live messages while foreign origins are denied",
+  { timeout: 15000 },
+  async () => {
+    const username = `tablet_${suffix}`;
+    const registration = await fetch(base + "/auth/register", {
+      method: "POST",
+      headers: { origin: lanOrigin, "content-type": "application/json" },
+      body: JSON.stringify({
+        username,
+        displayName: "Tablet",
+        email: `${username}@example.test`,
+        password,
+      }),
+    });
+    assert.equal(registration.status, 201, await registration.clone().text());
+    assert.equal(
+      registration.headers.get("access-control-allow-origin"),
+      lanOrigin,
+    );
+    assert.equal(
+      registration.headers.get("access-control-allow-credentials"),
+      "true",
+    );
+    const cookie = registration.headers.get("set-cookie")!.split(";")[0];
+    const serverResponse = await fetch(base + "/servers", {
+      method: "POST",
+      headers: {
+        origin: lanOrigin,
+        cookie,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ name: "Tablet sunucusu" }),
+    });
+    assert.equal(serverResponse.status, 201);
+    const server = await serverResponse.json();
+    const roomId = server.channels.find(
+      (channel: { kind: string }) => channel.kind === "text",
+    ).id;
+    const socket = io(base, {
+      extraHeaders: { Cookie: cookie, Origin: lanOrigin },
+      transports: ["websocket"],
+      reconnection: false,
+      autoConnect: false,
+    });
+    sockets.push(socket);
+    const connection = once(socket, "connect");
+    socket.connect();
+    await connection;
+    assert.deepEqual(
+      await socket.timeout(3000).emitWithAck("room:join", { roomId }),
+      { ok: true },
+    );
+    const received = once(socket, "message:created");
+    // Existing PC origin continues working alongside the tablet origin.
+    const { data: message } = await request(
+      `/rooms/${roomId}/messages`,
+      "POST",
+      { content: "PC ve tablet aynı sohbette." },
+      cookie,
+      201,
+    );
+    const [event] = await received;
+    assert.equal(event.message.id, message.id);
+    for (const foreignOrigin of [
+      "https://attacker.invalid",
+      "http://192.168.1.51:5173",
+    ]) {
+      const denied = await fetch(base + "/servers", {
+        method: "POST",
+        headers: {
+          origin: foreignOrigin,
+          cookie,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ name: "Denied" }),
+      });
+      assert.equal(denied.status, 403);
+      assert.notEqual(
+        denied.headers.get("access-control-allow-origin"),
+        foreignOrigin,
+      );
+      const untrusted = io(base, {
+        extraHeaders: { Cookie: cookie, Origin: foreignOrigin },
+        transports: ["websocket"],
+        reconnection: false,
+        autoConnect: false,
+      });
+      sockets.push(untrusted);
+      const rejected = once(untrusted, "connect_error");
+      untrusted.connect();
+      await rejected;
+      assert.equal(untrusted.connected, false);
+      untrusted.disconnect();
+    }
+  },
+);
 
 test(
   "KYTEW: two accounts, protected communities, invitation, live messages, durable history and private DM",
