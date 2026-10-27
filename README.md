@@ -44,6 +44,8 @@ PowerShell'de ilk komut `Copy-Item .env.example .env` olmalıdır. Var olan `.en
 
 API 4000, Vite 5173 portunda çalışır. Yeni terminalde `npm run desktop` Electron'u açar. İki kullanıcı için iki ayrı tarayıcı profili veya iki ayrı masaüstü veri profili kullanın. Aynı tarayıcı profilindeki sekmeler oturumu paylaşır.
 
+API geliştirme başlangıcı Prisma istemcisini otomatik üretir. Üretim başarısız olursa başlangıç durur ve Prisma komutunun hatası gösterilir. `npm ci`, üretilmiş istemciyi sildiğinden eski sürümlerde tekrar `npm run db:generate` çalıştırılması gerekir. `@prisma/client did not initialize yet` hatası alırsanız sunucuyu Ctrl+C ile kapatın, depo kökünde `npm run db:generate` çalıştırıp `Generated Prisma Client` sonucunu doğrulayın ve `npm run dev` ile yeniden başlatın. Üretim komutu hata verirse önce o hatayı çözün; API çalışmadığı sürece arayüzün `ECONNREFUSED` vermesi beklenir.
+
 Geliştirme sunucusu çalışırken API kontrolü:
 
 ```sh

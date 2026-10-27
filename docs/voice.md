@@ -65,6 +65,7 @@ Windows Güvenlik Duvarı'nın özel ağ profilinde TCP 5173 (uygulama), UDP 788
 
 ## Sık karşılaşılan durumlar
 
+- **`@prisma/client did not initialize yet` / girişte `ECONNREFUSED`**: API başlayamamıştır. Sunucuyu durdurup depo kökünde `npm run db:generate` çalıştırın. `Generated Prisma Client` yazdıktan sonra `npm run dev` ile yeniden açın. Yeni sürüm API başlangıcında bu üretimi otomatik yapar. Bu işlem hesapları veya veritabanını silmez.
 - **“Ses hizmeti henüz yapılandırılmadı”**: `npm run voice:setup`, Compose voice profili ve API'nin yeniden başlatılması gerekir.
 - **“Mikrofon için güvenli bağlantı gerekiyor”**: Yerel IP üzerinden HTTP kullanılıyor. Yukarıdaki HTTPS kurulumunu yapın.
 - **Mikrofon izni reddedildi/cihaz yok**: Tarayıcının site izinlerini ve Windows Gizlilik → Mikrofon ayarlarını kontrol edin. Cihazı bağlayıp tekrar katılın.
