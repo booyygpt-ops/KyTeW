@@ -13,7 +13,11 @@ export default defineConfig(({ mode }) => {
     throw new Error(
       "KYTEW_TLS_CERT and KYTEW_TLS_KEY must be provided together.",
     );
+  const version = JSON.parse(
+    readFileSync(new URL("./package.json", import.meta.url), "utf8"),
+  ).version;
   return {
+    define: { __KYTEW_VERSION__: JSON.stringify(version) },
     plugins: [react(), tailwind()],
     server: {
       port: 5173,

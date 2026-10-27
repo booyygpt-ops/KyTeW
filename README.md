@@ -1,6 +1,6 @@
 # KYTEW
 
-Özgün bir görsel kimliğe sahip, Türkçe öncelikli masaüstü topluluk uygulaması. **v0.1, çalışan metin ve ses iletişimi sürümüdür; ürünün tamamı değildir.** Örnek kullanıcı, mesaj veya sahte veri eklenmez. İlk açılışta hesap ve sunucu oluşturun.
+Özgün bir görsel kimliğe sahip, Türkçe öncelikli masaüstü topluluk uygulaması. **v0.2, çalışan metin ve ses iletişimi sürümüdür; ürünün tamamı değildir.** Örnek kullanıcı, mesaj veya sahte veri eklenmez. İlk açılışta hesap ve sunucu oluşturun.
 
 ## Çalışan özellikler
 

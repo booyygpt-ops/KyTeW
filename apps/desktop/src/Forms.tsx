@@ -278,7 +278,7 @@ export function Settings({
         </button>
       </div>
       <p className="feature-note">
-        <Shield size={14} /> KYTEW 0.1.0 · Türkçe
+        <Shield size={14} /> KYTEW {__KYTEW_VERSION__} · Türkçe
         <br />
         Görüntü, parola sıfırlama, e-posta doğrulama ve gelişmiş gizlilik
         ayarları bu sürümde yoktur.

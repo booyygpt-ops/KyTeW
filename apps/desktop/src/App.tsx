@@ -217,7 +217,7 @@ function Workspace({
         <Logo />
         <span>Birlikte daha yakın.</span>
         <span className="version">
-          ERKEN ERİŞİM <i /> v0.1.0
+          ERKEN ERİŞİM <i /> v{__KYTEW_VERSION__}
         </span>
       </div>
       <div
@@ -667,13 +667,12 @@ function Workspace({
               <div className="roadmap-note">
                 <Headphones size={19} />
                 <div>
-                  <b>Yeni bağlantılar yolda.</b>
+                  <b>Görüntü ve ekran paylaşımı</b>
                   <span>
-                    Sesli odalar hazır. Görüntülü görüşme ve ekran paylaşımı
-                    sonraki aşamada.
+                    Kamera ve ekran paylaşımı sonraki aşamada eklenecek.
                   </span>
                 </div>
-                <span className="soon">YAKINDA</span>
+                <span className="soon">VİDEO YAKINDA</span>
               </div>
             </div>
           )}

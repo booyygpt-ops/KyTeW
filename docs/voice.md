@@ -1,5 +1,11 @@
 # KYTEW sesli sohbet
 
+Güncel sesli sürüm üst çubukta **v0.2.0** gösterir. Ses kanalları başlığında “Yakında” yazısı bulunmaz. Ana sayfadaki **VİDEO YAKINDA** etiketi yalnızca kamera ve ekran paylaşımını ifade eder.
+
+## Eski arayüz görünüyorsa
+
+`npm run dev` mevcut klasördeki dosyaları çalıştırır, GitHub'dan güncelleme indirmez. ZIP ile kurduysanız Git komutları yerine GitHub'dan güncel ZIP'i indirip yeni bir klasöre çıkarın; eski kurulumun `.env` ve `.local` dosyalarını koruyun. Yalnızca derleme çıktıları kullanılıyorsa `npm run build` ile yeniden derleyin. Eski sunucu terminalini Ctrl+C ile kapatıp doğru klasörde yeniden başlatın, ardından tarayıcıyı Ctrl+F5 ile yenileyin. Git klonunda güncellemeyi `git pull origin main` ile alabilirsiniz. Mevcut veritabanı volume'larını silmeyin.
+
 Sunucu ses kanalları LiveKit SFU üzerinden çok katılımcılı gerçek ses taşır. Bu sürüm mikrofon, susturma, ses çıkışını kapatma, cihaz seçimi, kişi bazında ses seviyesi, konuşan kullanıcı vurgusu, bağlantı kalitesi ve yeniden bağlanma içerir. Kamera, ekran paylaşımı, grup DM araması ve Push-to-Talk henüz yoktur.
 
 ## PC'de yerel kurulum
