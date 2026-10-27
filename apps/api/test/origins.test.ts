@@ -2,6 +2,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createBrowserOriginPolicy } from "../src/origins";
 
+test("local HTTPS uses the same trusted LAN interfaces without allowing HTTP downgrade", () => {
+  const policy = createBrowserOriginPolicy(
+    { NODE_ENV: "development", WEB_ORIGIN: "https://localhost:5173" },
+    ["192.168.1.50"],
+  );
+  assert.equal(policy.isAllowed("https://192.168.1.50:5173"), true);
+  assert.equal(policy.isAllowed("http://192.168.1.50:5173"), false);
+});
+
 test("development trusts only this host's private IPv4 interfaces on the configured port", () => {
   const policy = createBrowserOriginPolicy(
     { NODE_ENV: "development", WEB_ORIGIN: "http://localhost:5173" },

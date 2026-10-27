@@ -13,11 +13,9 @@ Statik Vite `preview` sunucusu üretim API ters proxy'si sağlamaz. Dağıtılac
 
 Windows paketleme ortamında Electron/GitHub release ve electron-builder NSIS araçlarına ağ erişimi gerekir. Sertifikalar kaynak koda konulmaz; CI secret olarak yapılandırılır. Bu depoda otomatik yayınlama, sertifika veya gerçek sunucu alan adı tanımlanmamıştır.
 
-## Aşama 3: LiveKit / WebRTC (henüz uygulanmadı)
+## LiveKit ses altyapısı
 
-Gerçek çok kullanıcılı ses/görüntü için merkezi LiveKit SFU gerekir. Önerilen akış: istemci yetkili API'den kısa ömürlü, kanal/katılımcı kapsamlı LiveKit token'ı alır; API kanal bağlanma/konuşma/paylaşma yetkilerini denetler. `LIVEKIT_API_SECRET` hiçbir zaman istemciye verilmez. TLS sinyal sunucusu, UDP medya portları, NAT ve TURN gereksinimleri dağıtıma göre yapılandırılmalıdır. Varsayılan yaygın portlar TCP 7880 sinyal, TCP 7881 ve UDP 50000–60000 medyadır; kesin değerler LiveKit sunucu sürümüne göre resmî yapılandırmadan seçilmelidir.
-
-Örnek değişken adları `.env.example` içindedir; v0.1 bunları okumaz. Gerçek iki cihazda NAT/TURN, mikrofon/kamera izinleri, kopma-yeniden bağlanma, hoparlör seçimi, katılımcı yetkileri ve ekran paylaşımı test edilmeden ses aşaması tamamlanmış sayılmaz. Electron'da medya izinleri ve güvenli ekran kaynağı seçimi bu aşamada dar kapsamlı olarak açılmalıdır; mevcut sürüm bunları reddeder.
+Sesli görüşme uygulanmıştır. Yerel servis, HTTPS/tablet kurulumu, medya portları, yetkiler ve test kapsamı [docs/voice.md](voice.md) içindedir. Kamera ve ekran paylaşımı henüz uygulanmadı. Üretim dağıtımında HTTPS/WSS, katılımcıların erişebildiği SFU dış IP/NAT ve gerekirse TURN yapılandırılmalıdır. Yerel Compose ağ ayarı internet dağıtımı yerine geçmez.
 
 ## Aşama 4: S3 (henüz uygulanmadı)
 

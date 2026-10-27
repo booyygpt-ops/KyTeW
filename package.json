@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "concurrently -k -n api,web \"npm run dev -w @kytew/api\" \"npm run dev -w @kytew/desktop\"",
     "desktop": "npm run desktop -w @kytew/desktop",
+    "voice:setup": "node infra/setup-voice.cjs",
     "build": "npm run build -w @kytew/api && npm run build -w @kytew/desktop",
     "typecheck": "npm run typecheck --workspaces",
     "db:generate": "npm run db:generate -w @kytew/api",

@@ -9,6 +9,7 @@ apps/api/     NestJS 11
   security.ts oturum doğrulama, üye/sahip ve sohbet erişim denetimi
   community.ts sunucu, kanal, üye ve süre/kullanım sınırlı davet
   social.ts   arkadaşlık ve iki taraflı DM
+  voice.ts    LiveKit mikrofon token, Redis lease ve sunucu taraflı iptal denetimi
   messages.ts kalıcı mesaj komutları, imleç sayfalama ve arama
   realtime.ts Socket.IO yetkili oda abonelikleri; Redis yazıyor sınırlaması
   database.ts Prisma + PostgreSQL sürücü adaptörü
@@ -25,12 +26,12 @@ Redis API hız sınırlarını ve yazıyor olaylarını koordine eder. **Bu sür
 - Geliştirmede HttpOnly/SameSite=Lax; üretimde ek olarak Secure ve `__Host-` öneki. Token localStorage'a yazılmaz. Kalıcı giriş 30 gün; normal giriş sunucuda en fazla bir gün ve tarayıcı oturum çerezi.
 - Zod doğrulama, 16 KiB HTTP ve 8 KiB socket gövde sınırı; Prisma parametreli sorgular.
 - Değiştiren HTTP isteklerinde kesin Origin kontrolü; WebSocket handshake ve oda aboneliğinde oturum/Origin kontrolü.
-- HTTP CORS, yazma istekleri ve Socket.IO ortak kaynak politikasını kullanır. `WEB_ORIGIN` birincil adres, `WEB_ORIGINS` ek tam adreslerdir. Yalnızca `NODE_ENV=development` altında, `ALLOW_LAN_ORIGINS=false` değilse, makinenin gerçek özel IPv4 arayüzleri birincil HTTP adresinin portunda otomatik eklenir. Başka yerel IP'ler, yanlış portlar ve istemciden gelen Host/forwarded başlıkları güven kaynağı değildir. Üretimde otomatik genişletme yapılmaz.
+- HTTP CORS, yazma istekleri ve Socket.IO ortak kaynak politikasını kullanır. `WEB_ORIGIN` birincil adres, `WEB_ORIGINS` ek tam adreslerdir. Yalnızca `NODE_ENV=development` altında, `ALLOW_LAN_ORIGINS=false` değilse, makinenin gerçek özel IPv4 arayüzleri birincil adresin protokolü ve portunda otomatik eklenir. Başka yerel IP'ler, yanlış portlar ve istemciden gelen Host/forwarded başlıkları güven kaynağı değildir. Üretimde otomatik genişletme yapılmaz.
 - Her mesaj gönderme, okuma, düzenleme, silme ve socket aboneliğinde sunucu tarafında yetki kontrolü. Teslimattan önce üyelik/oturum tekrar denetlenir.
 - Sunucu sahibi kanal/davet oluşturabilir; üye okuyabilir/yazabilir. İlk sürüm özel rol ve özel kanal yetki motoru içermez.
 - Çıkış ve şifre değişimi oturum kayıtlarını iptal eder; sonraki socket teslimatları da bunu denetler.
 - Redis IP hız sınırı: giriş/kayıt 20/dakika; diğer HTTP istekleri 120/10 saniye. Güvenilmeyen X-Forwarded-For yok sayılır. Üretim proxy politikasına göre IP rate limit mimarisi gözden geçirilmelidir (proxy arkasında istemciler aynı IP'yi paylaşabilir).
-- Markdown ham HTML çalıştırmaz; dış görseller otomatik indirilmez. Electron yeni pencere, keyfi gezinme, webview ve tüm medya izinlerini reddeder. Preload yalnızca platform/sürüm bilgisini açar.
+- Markdown ham HTML çalıştırmaz; dış görseller otomatik indirilmez. Electron yeni pencere, keyfi gezinme, webview, kamera ve ekran paylaşımı izinlerini reddeder; yalnızca güvenilen ana çerçevede mikrofon ve ses çıkışı seçimine izin verir. Preload yalnızca platform/sürüm bilgisini açar.
 
 Sınırlar: e-posta sahipliği doğrulanmaz, parola kurtarma yoktur; profil durum alanı bir tercih değeridir. Üretim için mail doğrulama, abuse/moderasyon, olay denetimi, retention/yedekleme, uygulama güvenlik değerlendirmesi ve kod imzalama gereklidir. Doğrulanmamış özelliklere görsel başarı simülasyonu eklenmedi.
 
@@ -41,3 +42,5 @@ Varsayılan Türkçe. `src/locales/index.ts` anahtar türüyle denetlenen TR/EN 
 ## Geliştirme ilkeleri
 
 Bulut görevleri zaten izoledir; mevcut checkout'u kullanın, kullanıcı istemedikçe worktree oluşturmayın. Şifreleri veya `.env` içeriğini commit etmeyin. Gerçek veri yollarını test edin; tamamlanmayan özellikleri hazır gibi sunmayın.
+
+Ses akışı ve güvenlik sınırları [sesli sohbet belgesinde](voice.md) açıklanır. LiveKit SDK yalnızca ilk ses katılımında dinamik yüklenir. UI bağlantı durumu hem medya hem sinyal yeniden bağlantısını izler; görüşme metin/DM gezinmesinden bağımsız yaşar.

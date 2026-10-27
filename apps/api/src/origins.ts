@@ -44,11 +44,7 @@ export function createBrowserOriginPolicy(
     .filter(Boolean)) {
     allowed.add(originUrl(value).origin);
   }
-  if (
-    env.NODE_ENV === "development" &&
-    env.ALLOW_LAN_ORIGINS !== "false" &&
-    primary.protocol === "http:"
-  ) {
+  if (env.NODE_ENV === "development" && env.ALLOW_LAN_ORIGINS !== "false") {
     for (const address of [
       "127.0.0.1",
       ...localAddresses.filter(privateIPv4),

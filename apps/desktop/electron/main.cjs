@@ -1,6 +1,13 @@
 const { app, BrowserWindow, session } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
+const { audioPermissionAllowed } = require("./permissions.cjs");
+const localEnv = path.resolve(__dirname, "../../../.env");
+const localAppUrl =
+  !app.isPackaged && fs.existsSync(localEnv)
+    ? require("node:util").parseEnv(fs.readFileSync(localEnv, "utf8"))
+        .KYTEW_APP_URL
+    : undefined;
 const configuredUrl = app.isPackaged
   ? JSON.parse(
       fs.readFileSync(
@@ -9,7 +16,7 @@ const configuredUrl = app.isPackaged
       ),
     ).appUrl
   : "http://localhost:5173";
-const appUrl = process.env.KYTEW_APP_URL || configuredUrl;
+const appUrl = process.env.KYTEW_APP_URL || localAppUrl || configuredUrl;
 function trusted(value) {
   try {
     const u = new URL(value);
@@ -25,10 +32,6 @@ app.whenReady().then(() => {
     !(u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname))
   )
     throw new Error("KYTEW_APP_URL must use HTTPS outside localhost.");
-  session.defaultSession.setPermissionRequestHandler(
-    (_webContents, _permission, callback) => callback(false),
-  );
-  session.defaultSession.setPermissionCheckHandler(() => false);
   const win = new BrowserWindow({
     width: 1440,
     height: 920,
@@ -45,6 +48,27 @@ app.whenReady().then(() => {
       webSecurity: true,
     },
   });
+  session.defaultSession.setPermissionRequestHandler(
+    (contents, permission, callback, details) => {
+      callback(
+        contents === win.webContents &&
+          audioPermissionAllowed(
+            appUrl,
+            details.requestingUrl,
+            permission,
+            details,
+          ),
+      );
+    },
+  );
+  session.defaultSession.setPermissionCheckHandler(
+    (contents, permission, origin, details) => {
+      return (
+        contents === win.webContents &&
+        audioPermissionAllowed(appUrl, origin, permission, details)
+      );
+    },
+  );
   win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   win.webContents.on("will-navigate", (event, url) => {
     if (!trusted(url)) event.preventDefault();

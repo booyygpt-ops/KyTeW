@@ -5,6 +5,7 @@ import { once } from "node:events";
 import { io, type Socket } from "socket.io-client";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { TokenVerifier, RoomServiceClient } from "livekit-server-sdk";
 
 const base = "http://localhost:4101",
   origin = "http://localhost:5173";
@@ -110,6 +111,178 @@ after(async () => {
   processApi?.kill("SIGTERM");
   await db.$disconnect();
 });
+
+test(
+  "voice access is restricted to members, short-lived microphone grants and the current session lease",
+  { timeout: 20000 },
+  async () => {
+    const owner = await register("voiceowner"),
+      member = await register("voicemember"),
+      outsider = await register("voicedenied");
+    const { data: server } = await request(
+      "/servers",
+      "POST",
+      { name: "Voice permissions" },
+      owner.cookie,
+      201,
+    );
+    const voiceId = server.channels.find(
+      (c: { kind: string }) => c.kind === "voice",
+    ).id;
+    const textId = server.channels.find(
+      (c: { kind: string }) => c.kind === "text",
+    ).id;
+    await request(
+      `/voice/channels/${voiceId}/join`,
+      "POST",
+      undefined,
+      "",
+      401,
+    );
+    await request(
+      `/voice/channels/${voiceId}/join`,
+      "POST",
+      undefined,
+      outsider.cookie,
+      403,
+    );
+    await request(
+      `/voice/channels/${textId}/join`,
+      "POST",
+      undefined,
+      owner.cookie,
+      404,
+    );
+    await db.member.create({
+      data: { userId: member.id, serverId: server.id },
+    });
+    assert.equal(
+      (await request("/voice/status", "GET", undefined, owner.cookie)).data
+        .ready,
+      true,
+    );
+    const { data: ticket } = await request(
+      `/voice/channels/${voiceId}/join`,
+      "POST",
+      undefined,
+      member.cookie,
+      201,
+    );
+    const claims = await new TokenVerifier(
+      process.env.LIVEKIT_API_KEY!,
+      process.env.LIVEKIT_API_SECRET!,
+    ).verify(ticket.token);
+    assert.equal(claims.sub, member.id);
+    assert.equal(claims.video?.room, `kytew-${voiceId}`);
+    assert.equal(claims.video?.roomJoin, true);
+    assert.equal(claims.video?.canSubscribe, true);
+    assert.equal(claims.video?.canPublishData, false);
+    assert.deepEqual(claims.video?.canPublishSources, ["microphone"]);
+    assert.ok(claims.exp! - claims.nbf! <= 65);
+    assert.equal(ticket.apiSecret, undefined);
+    const client = new RoomServiceClient(
+      process.env.LIVEKIT_INTERNAL_URL!,
+      process.env.LIVEKIT_API_KEY,
+      process.env.LIVEKIT_API_SECRET,
+    );
+    assert.equal((await client.listRooms([`kytew-${voiceId}`])).length, 1);
+    await request(
+      `/voice/channels/${voiceId}/heartbeat`,
+      "POST",
+      { leaseId: ticket.leaseId },
+      member.cookie,
+      201,
+    );
+    const { data: replacement } = await request(
+      `/voice/channels/${voiceId}/join`,
+      "POST",
+      undefined,
+      member.cookie,
+      201,
+    );
+    await request(
+      `/voice/channels/${voiceId}/heartbeat`,
+      "POST",
+      { leaseId: ticket.leaseId },
+      member.cookie,
+      403,
+    );
+    await request(
+      `/voice/channels/${voiceId}`,
+      "DELETE",
+      { leaseId: ticket.leaseId },
+      member.cookie,
+    );
+    await request(
+      `/voice/channels/${voiceId}/heartbeat`,
+      "POST",
+      { leaseId: replacement.leaseId },
+      member.cookie,
+      201,
+    );
+    const { data: otherVoice } = await request(
+      `/servers/${server.id}/channels`,
+      "POST",
+      { name: "İkinci ses odası", kind: "voice" },
+      owner.cookie,
+      201,
+    );
+    assert.equal(otherVoice.kind, "voice");
+    const { data: moved } = await request(
+      `/voice/channels/${otherVoice.id}/join`,
+      "POST",
+      undefined,
+      member.cookie,
+      201,
+    );
+    await request(
+      `/voice/channels/${voiceId}/heartbeat`,
+      "POST",
+      { leaseId: replacement.leaseId },
+      member.cookie,
+      403,
+    );
+    await request(
+      `/voice/channels/${otherVoice.id}/heartbeat`,
+      "POST",
+      { leaseId: moved.leaseId },
+      member.cookie,
+      201,
+    );
+    await request(
+      `/servers/${server.id}/membership`,
+      "DELETE",
+      undefined,
+      member.cookie,
+    );
+    await request(
+      `/voice/channels/${voiceId}/heartbeat`,
+      "POST",
+      { leaseId: replacement.leaseId },
+      member.cookie,
+      403,
+    );
+    await request(
+      `/voice/channels/${voiceId}`,
+      "DELETE",
+      { leaseId: replacement.leaseId },
+      member.cookie,
+    );
+    await request(
+      `/voice/channels/${otherVoice.id}/heartbeat`,
+      "POST",
+      { leaseId: moved.leaseId },
+      member.cookie,
+      403,
+    );
+    await request(
+      `/voice/channels/${otherVoice.id}`,
+      "DELETE",
+      { leaseId: moved.leaseId },
+      member.cookie,
+    );
+  },
+);
 
 test(
   "configured tablet origin supports registration, authenticated requests and live messages while foreign origins are denied",

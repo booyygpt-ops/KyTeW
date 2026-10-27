@@ -22,7 +22,7 @@ export function ActionForm({
   const titles = {
     create: "Kendi topluluğunu oluştur",
     join: "Bir topluluğa katıl",
-    channel: "Yeni metin kanalı",
+    channel: "Yeni kanal",
     friend: "Arkadaş ekle",
     invite: "Sohbete birini davet et",
   };
@@ -51,6 +51,7 @@ export function ActionForm({
         await api(`/servers/${serverId}/channels`, "POST", {
           name: data.get("name"),
           topic: data.get("topic"),
+          kind: data.get("kind"),
         });
       if (kind === "friend")
         await api("/friends", "POST", { username: data.get("username") });
@@ -84,6 +85,15 @@ export function ActionForm({
                 : "Sunucunda yeni sohbetlere yer aç."}
       </p>
       <form onSubmit={submit}>
+        {kind === "channel" && (
+          <label>
+            Kanal türü
+            <select name="kind">
+              <option value="text">Metin kanalı</option>
+              <option value="voice">Ses kanalı</option>
+            </select>
+          </label>
+        )}
         {(kind === "create" || kind === "channel") && (
           <>
             <label>
@@ -270,7 +280,7 @@ export function Settings({
       <p className="feature-note">
         <Shield size={14} /> KYTEW 0.1.0 · Türkçe
         <br />
-        Ses/görüntü, parola sıfırlama, e-posta doğrulama ve gelişmiş gizlilik
+        Görüntü, parola sıfırlama, e-posta doğrulama ve gelişmiş gizlilik
         ayarları bu sürümde yoktur.
       </p>
       <button

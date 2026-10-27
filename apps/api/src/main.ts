@@ -22,6 +22,7 @@ import { CommunityController } from "./community";
 import { SocialController } from "./social";
 import { MessagesController } from "./messages";
 import { browserOrigins } from "./origins";
+import { VoiceController, VoiceService } from "./voice";
 
 @Catch()
 class Errors implements ExceptionFilter {
@@ -67,8 +68,17 @@ class Health {
     CommunityController,
     SocialController,
     MessagesController,
+    VoiceController,
   ],
-  providers: [Database, Sessions, SessionGuard, Access, Realtime, Runtime],
+  providers: [
+    Database,
+    Sessions,
+    SessionGuard,
+    Access,
+    Realtime,
+    Runtime,
+    VoiceService,
+  ],
 })
 class AppModule {}
 async function bootstrap() {

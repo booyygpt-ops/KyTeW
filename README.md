@@ -1,21 +1,22 @@
 # KYTEW
 
-Özgün bir görsel kimliğe sahip, Türkçe öncelikli masaüstü topluluk uygulaması. **v0.1, çalışan metin iletişimi sürümüdür; ürünün tamamı değildir.** Örnek kullanıcı, mesaj veya sahte veri eklenmez. İlk açılışta hesap ve sunucu oluşturun.
+Özgün bir görsel kimliğe sahip, Türkçe öncelikli masaüstü topluluk uygulaması. **v0.1, çalışan metin ve ses iletişimi sürümüdür; ürünün tamamı değildir.** Örnek kullanıcı, mesaj veya sahte veri eklenmez. İlk açılışta hesap ve sunucu oluşturun.
 
 ## Çalışan özellikler
 
 - Kayıt, giriş, HttpOnly oturum çerezi, oturumu hatırlama, güvenli çıkış ve diğer oturumları iptal eden şifre değişimi.
 - Argon2id şifre hashleri; veritabanında yalnızca SHA-256 özeti tutulan rastgele oturum anahtarları.
 - Görünen ad, biyografi, benzersiz kullanıcı adı ve durum **tercihi**. Durum tercihi canlı çevrimiçi takibi değildir.
-- Sunucu oluşturma; varsayılan metin ve henüz kullanılamayan ses kanalı; sahip tarafından yeni metin kanalı oluşturma.
+- Sunucu oluşturma; varsayılan metin/ses kanalları; sahip tarafından yeni metin veya ses kanalı oluşturma.
 - 24 saat/10 kullanım sınırlı davet, katılma, üye listesi ve üyenin sunucudan ayrılması.
 - Arkadaşlık isteği, kabul/ret/iptal, arkadaş silme; kabul edilmiş arkadaşlar arasında birebir özel sohbet.
 - PostgreSQL'de saklanan kanal ve DM mesajları; Socket.IO canlı iletim ve yeniden bağlantı; yazıyor göstergesi.
 - Mesaj düzenleme/silme (yazar kontrolü), Markdown/kod blokları, arama, 50 mesajlık imleç sayfalama ve sanallaştırılmış liste.
 - Özgün K logosu, koyu/açık tema, sürüklenerek boyutlandırılan masaüstü panelleri, klavye erişimi ve hata durumları.
+- LiveKit SFU ile çok katılımcılı ses; mikrofon/ses çıkışı kontrolü, cihaz seçimi, kişi bazında ses seviyesi, konuşan vurgusu ve otomatik yeniden bağlantı.
 - Electron güvenlik kabuğu ve Windows NSIS paketleme altyapısı.
 
-**Bu sürümde yok:** canlı ses/görüntü/ekran paylaşımı, dosya yükleme, profil görselleri, grup DM, engelleme, e-posta doğrulama/sıfırlama, özel roller/kanal istisnaları, moderasyon, tepkiler/yanıtlar/sabitleme, okunmamış sayaçları, bildirimler, tam İngilizce arayüz, otomatik güncelleme ve Windows başlangıç ayarı. Ses kanalları “Yakında” olarak işaretlidir ve bağlantı başlatmaz. Üyeler/arkadaşlık listeleri 10 saniyede güncellenir; mesajlar gerçek zamanlıdır.
+**Bu sürümde yok:** görüntü/ekran paylaşımı, Push-to-Talk, dosya yükleme, profil görselleri, grup DM, engelleme, e-posta doğrulama/sıfırlama, özel roller/kanal istisnaları, moderasyon, tepkiler/yanıtlar/sabitleme, okunmamış sayaçları, bildirimler, tam İngilizce arayüz, otomatik güncelleme ve Windows başlangıç ayarı. Üyeler/arkadaşlık listeleri 10 saniyede güncellenir; mesajlar gerçek zamanlıdır.
 
 ## Gereksinimler
 
@@ -34,6 +35,8 @@ npm ci
 docker compose up -d --wait
 npm run db:generate
 npm run db:migrate
+npm run voice:setup
+docker compose --profile voice up -d --wait
 npm run dev
 ```
 
@@ -49,6 +52,10 @@ curl http://localhost:4000/health
 ```
 
 Durdurmak için uygulama terminalinde Ctrl+C, servisler için `docker compose stop`. `docker compose down` volume verilerini korur. `down -v` verileri siler; rutin kurulumda kullanmayın.
+
+## Sesli sohbet
+
+Ses kanalını seçip **Ses kanalına katıl** düğmesine basın. PC’de `localhost` mikrofon erişimi için uygundur. **Tablet/telefonda mikrofon için güvenilir HTTPS gerekir**; düz HTTP IP adresi yalnızca metin sohbeti için yeterlidir. Ayrıntılı [PC/tablet ses ve HTTPS kurulumu](docs/voice.md) hazırdır.
 
 ## Aynı ağdaki tablet veya telefondan erişim
 
@@ -69,6 +76,8 @@ Sayfa hiç açılmıyorsa aynı ana ağda olduğunuzu (misafir Wi-Fi istemci yal
 
 ## Test ve derleme
 
+Ses testleri için önce `npm run voice:setup` ve `docker compose --profile voice up -d --wait` çalıştırılmalıdır.
+
 ```sh
 npm run typecheck
 npm run build
@@ -80,7 +89,7 @@ npm run test:ui
 
 Mevcut sistem Chromium'u varsa `CHROMIUM_PATH=/usr/bin/chromium npm run test:ui` kullanılabilir; PowerShell'de değişkeni `$env:CHROMIUM_PATH` ile ayarlayın. API testleri 4101 portunda kendi API sürecini açar; derleme önceden yapılmalıdır. PostgreSQL ve Redis açık olmalıdır. Testler `.env` veritabanında benzersiz adlarla gerçek test kayıtları oluşturur, mevcut verileri silmez. Ayrı test veritabanı tercih ediyorsanız `.env` bağlantısını o veritabanına yöneltip migration uygulayın. UI testleri `npm run dev` çalıştırır veya var olan geliştirme sunucusunu kullanır.
 
-Test kapsamı: hesaplar/hashler, kaynak/oturum denetimi, kanal üyeliği, sahip yetkisi, davet süresi ve eşzamanlı kapasite, canlı Socket.IO iletimi, sayfalama/arama, yazar yetkisi, DM gizliliği, çıkış/şifre değişimi; iki bağımsız tarayıcı oturumuyla gerçek kanal ve DM akışları, yeniden yüklemede geçmiş ve tema/mobil giriş.
+Test kapsamı: hesaplar/hashler, kaynak/oturum denetimi, kanal üyeliği, sahip yetkisi, davet süresi ve eşzamanlı kapasite, canlı Socket.IO iletimi, sayfalama/arama, yazar yetkisi, DM gizliliği, çıkış/şifre değişimi, mikrofon kapsamlı LiveKit grant ve lease denetimi; iki bağımsız tarayıcı oturumuyla gerçek kanal ve DM akışları, yeniden yüklemede geçmiş, tema/mobil giriş ve çift yönlü çözülen gerçek WebRTC sesi.
 
 ## Veritabanı ve migration kararı
 

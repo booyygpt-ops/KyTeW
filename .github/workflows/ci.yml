@@ -26,6 +26,10 @@ jobs:
           cache: npm
       - run: cp .env.example .env
       - run: npm ci
+      - run: npm run voice:setup
+        env:
+          LIVEKIT_NODE_IP: 127.0.0.1
+      - run: docker compose --profile voice up -d --wait livekit
       - run: npm run db:generate
       - run: npm run db:migrate
       - run: npm run typecheck && npm run build && npm test

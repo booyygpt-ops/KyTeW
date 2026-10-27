@@ -30,6 +30,8 @@ import Auth from "./Auth";
 import Chat from "./Chat";
 import { Avatar, ErrorBox, Logo } from "./ui";
 import { ActionForm, Settings } from "./Forms";
+import { VoiceProvider } from "./voice/VoiceContext";
+import VoicePanel, { VoiceDock } from "./voice/VoicePanel";
 
 export default function App() {
   const [me, setMe] = useState<User | null>(null),
@@ -69,15 +71,17 @@ export default function App() {
       </>
     );
   return (
-    <Workspace
-      key={me.id}
-      me={me}
-      updateMe={setMe}
-      logout={async () => {
-        await api("/auth/logout", "POST");
-        setMe(null);
-      }}
-    />
+    <VoiceProvider>
+      <Workspace
+        key={me.id}
+        me={me}
+        updateMe={setMe}
+        logout={async () => {
+          await api("/auth/logout", "POST");
+          setMe(null);
+        }}
+      />
+    </VoiceProvider>
   );
 }
 function Workspace({
@@ -335,20 +339,19 @@ function Workspace({
                       {roomId === c.id && <i />}
                     </button>
                   ))}
-                <div className="section-label voice-label">
-                  SES KANALLARI <span className="soon">YAKINDA</span>
-                </div>
+                <div className="section-label voice-label">SES KANALLARI</div>
                 {server.channels
                   .filter((c) => c.kind === "voice")
                   .map((c) => (
-                    <div
-                      className="channel-link unavailable"
-                      title="Sesli görüşme henüz geliştirilmedi"
+                    <button
+                      className={`channel-link ${roomId === c.id ? "selected" : ""}`}
+                      aria-label={`${c.name} ses kanalı`}
+                      onClick={() => setRoomId(c.id)}
                       key={c.id}
                     >
                       <Volume2 size={18} />
                       {c.name}
-                    </div>
+                    </button>
                   ))}
                 {server.ownerId === me.id ? (
                   <button
@@ -438,6 +441,7 @@ function Workspace({
               </>
             )}
           </div>
+          <VoiceDock />
           <footer className="user-dock">
             <button
               className="profile-button"
@@ -470,7 +474,11 @@ function Workspace({
             <div className="heading-title">
               {roomId ? (
                 channel ? (
-                  <Hash size={23} />
+                  channel.kind === "voice" ? (
+                    <Volume2 size={23} />
+                  ) : (
+                    <Hash size={23} />
+                  )
                 ) : (
                   <MessageCircle size={22} />
                 )
@@ -509,7 +517,9 @@ function Workspace({
               </button>
             </div>
           )}
-          {roomId ? (
+          {channel?.kind === "voice" ? (
+            <VoicePanel channel={channel} />
+          ) : roomId ? (
             <Chat
               key={roomId}
               roomId={roomId}
@@ -659,8 +669,8 @@ function Workspace({
                 <div>
                   <b>Yeni bağlantılar yolda.</b>
                   <span>
-                    Sesli odalar, görüntülü görüşme ve ekran paylaşımı sonraki
-                    aşamada.
+                    Sesli odalar hazır. Görüntülü görüşme ve ekran paylaşımı
+                    sonraki aşamada.
                   </span>
                 </div>
                 <span className="soon">YAKINDA</span>

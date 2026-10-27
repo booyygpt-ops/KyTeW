@@ -2,7 +2,7 @@
   "name": "@kytew/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "KYTEW masa\u00fcst\u00fc topluluk ve mesajla\u015fma uygulamas\u0131",
+  "description": "KYTEW masaüstü topluluk ve mesajlaşma uygulaması",
   "author": "KYTEW",
   "license": "UNLICENSED",
   "type": "module",
@@ -15,21 +15,22 @@
     "dist:win": "node electron/build-config.cjs && electron-builder --win nsis --x64"
   },
   "dependencies": {
+    "livekit-client": "^2.23.0",
+    "lucide-react": "^0.468.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "lucide-react": "^0.468.0",
     "react-markdown": "^10.1.0",
     "react-virtuoso": "^4.18.0",
     "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^4.7.0",
-    "@tailwindcss/vite": "^4.1.0",
-    "tailwindcss": "^4.1.0",
     "electron": "45.0.0",
     "electron-builder": "^26.0.0",
+    "tailwindcss": "^4.1.0",
     "typescript": "^5.9.0",
     "vite": "^6.4.0"
   },
@@ -42,6 +43,7 @@
     "files": [
       "electron/main.cjs",
       "electron/preload.cjs",
+      "electron/permissions.cjs",
       "dist/**/*",
       "package.json"
     ],

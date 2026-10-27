@@ -161,7 +161,7 @@ export default function Auth({ onLogin }: { onLogin: (user: User) => void }) {
           <p className="feature-note">
             İlk sürüm: hesaplar, sunucular ve canlı metin sohbeti.
             <br />
-            Ses ve görüntü bir sonraki aşamada.
+            Sesli odalarda buluş; görüntü bir sonraki aşamada.
           </p>
         </div>
       </section>

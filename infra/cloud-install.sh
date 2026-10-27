@@ -10,6 +10,7 @@ fi
 if [ ! -f .env ]; then cp .env.example .env; fi
 npm ci
 npm run db:generate
-docker compose up -d --wait
+LIVEKIT_NODE_IP=127.0.0.1 npm run voice:setup
+docker compose --profile voice up -d --wait
 npm run db:migrate
 npm run build

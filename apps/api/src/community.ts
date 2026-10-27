@@ -77,6 +77,7 @@ export class CommunityController {
       .object({
         name: z.string().trim().min(1).max(40),
         topic: z.string().max(240).default(""),
+        kind: z.enum(["text", "voice"]).default("text"),
       })
       .parse(body);
     return this.db.channel.create({ data: { ...data, serverId } });
